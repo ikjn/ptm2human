@@ -460,7 +460,7 @@ void tracer_address(void *t)
     if (SIXTY_FOUR_BIT(tracer)) {
         OUTPUT("Address - Instruction address 0x%016llx, Instruction set Aarch64\n", address);
     } else {
-        if (IS) {
+        if (!IS) {
             OUTPUT("Address - Instruction address 0x%016llx, Instruction set Aarch32 (ARM)\n", address);
         } else {
             OUTPUT("Address - Instruction address 0x%016llx, Instruction set Aarch32 (Thumb)\n", address);
