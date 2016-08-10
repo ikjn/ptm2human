@@ -69,22 +69,31 @@ DEF_TRACEPKT(q, 0xf0, 0xa0);
 
 DECL_DECODE_FN(extension)
 {
-    int index = 1, cnt;
+    int valid = 1;
+    int index = 1;
 
     switch (pkt[index]) {
     case 0:
-        /* async */
-        for (cnt = 0 ; (cnt < 11) & (index < stream->buff_len); cnt++, index++) {
-            if (cnt == 10 && pkt[index] != 0x80)
-                break;
-            if (cnt != 10 && pkt[index] != 0)
-                break;
-        }
-        if (cnt != 11) {
-            LOGE("Payload bytes of async are not correct\n");
-            LOGE("Invalid async packet\n");
+	for (; index < 11; index++) {
+		if (pkt[index] != 0) {
+			valid = 0;
+			break;
+		}
+    	}
+        if (pkt[11] != 0x80)
+		valid = 0;
+	
+        if (!valid) {
+#if 0
+	    int i;
+	    for (i = 0; i < 12; i++)
+		    LOGD("%2d:  %02x\n", i, pkt[i]);
+            LOGD("Payload bytes of async are not correct\n");
+            LOGD("Invalid async packet\n");
+#endif
             return -1;
-        }
+        } else
+	    index = 12;
         LOGD("[async]\n");
 
         break;
@@ -104,9 +113,7 @@ DECL_DECODE_FN(extension)
         break;
 
     default:
-        LOGE("First payload byte of async is not correct\n");
-        LOGE("Invalid async packet\n");
-        index = -1;
+	index = 1;
         break;
     }
 
@@ -194,8 +201,8 @@ DECL_DECODE_FN(trace_info)
         }
     }
 
-    LOGD("[trace info] plctl = 0x%X, info = 0x%X, key = 0x%X, spec = %d, cyct = 0x%X\n",
-         plctl, info, key, spec, cyct);
+    LOGD("[trace info] plctl = 0x%X, info = 0x%X, key = 0x%X, spec = %d, cyct = 0x%X, %d bytes\n",
+         plctl, info, key, spec, cyct, index);
 
     if (stream->state >= INSYNC) {
         tracer_trace_info(&(stream->tracer), plctl, info, key, spec, cyct);

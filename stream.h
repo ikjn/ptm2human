@@ -31,6 +31,7 @@ enum
 struct stream
 {
     char *buff;
+    int *offsets;
     unsigned int buff_len;
     int state;
     union
@@ -42,5 +43,10 @@ struct stream
 
 extern int decode_stream(struct stream *stream);
 extern int decode_etb_stream(struct stream *stream);
-
+static inline void stream_push(struct stream *stream, const char c, int offset)
+{
+	stream->buff[stream->buff_len] = c;
+    stream->offsets[stream->buff_len] = offset;
+	stream->buff_len++;
+}
 #endif

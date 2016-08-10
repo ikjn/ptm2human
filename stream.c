@@ -47,7 +47,7 @@ int decode_stream(struct stream *stream)
         LOGE("Cannot find any synchronization packet\n");
         return -1;
     } else {
-        LOGD("Trace starts from offset %d\n", cur);
+        LOGD("Trace starts from offset 0x%x\n", cur);
     }
 
     LOGV("Decoding the trace stream...\n");
@@ -56,7 +56,7 @@ int decode_stream(struct stream *stream)
     for (; cur < stream->buff_len; ) {
         unsigned char c = stream->buff[cur];
 
-        LOGD("Got a packet header 0x%02x at offset %d\n", c, cur);
+        LOGD("Got a packet header 0x%02x at offset 0x%x/0x%x\n", c, cur, stream->offsets[cur]);
 
         for (i = 0; tracepkts[i]; i++) {
             if ((c & tracepkts[i]->mask) == tracepkts[i]->val) {
@@ -73,7 +73,8 @@ int decode_stream(struct stream *stream)
 
         ret = tracepkts[i]->decode((const unsigned char *)&(stream->buff[cur]), stream);
         if (ret <= 0) {
-            LOGE("Cannot decode a packet of type %s at offset %d\n", tracepkts[i]->name, cur);
+            LOGE("Cannot decode a packet of type %s at offset 0x%x/0x%x\n",
+                    tracepkts[i]->name, cur, stream->offsets[cur]);
             LOGE("Proceed on guesswork\n");
             cur++;
         } else {
