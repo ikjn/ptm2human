@@ -46,7 +46,7 @@ struct etmv4_tracer
     unsigned long long timestamp;
     struct address_register address_register[3];
     unsigned int context_id;
-    unsigned int vmid:8;
+    unsigned int vmid;
     unsigned int ex_level:2;
     unsigned int security:1;
     unsigned int sixty_four_bit:1;

@@ -60,11 +60,13 @@ DEF_TRACEPKT(address_context_32bit_is1, 0xff, 0x83);
 DEF_TRACEPKT(address_context_64bit_is0, 0xff, 0x85);
 DEF_TRACEPKT(address_context_64bit_is1, 0xff, 0x86);
 DEF_TRACEPKT(atom_format_1, 0xfe, 0xf6);
-DEF_TRACEPKT(atom_format_2, 0xfe, 0xd8);
-DEF_TRACEPKT(atom_format_3, 0xfe, 0xf8);
-DEF_TRACEPKT(atom_format_4, 0xfe, 0xdc);
-DEF_TRACEPKT(atom_format_5, 0xd4, 0xd4);
-DEF_TRACEPKT(atom_format_6, 0xc0, 0xc0);
+DEF_TRACEPKT(atom_format_2, 0xfc, 0xd8);
+DEF_TRACEPKT(atom_format_3, 0xf8, 0xf8);
+DEF_TRACEPKT(atom_format_4, 0xfc, 0xdc);
+DEF_TRACEPKT(atom_format_5a, 0xfc, 0xd4);
+DEF_TRACEPKT(atom_format_5b, 0xff, 0xf5);
+DEF_TRACEPKT_RANGE(atom_format_6a, 0xc0, 0xd4);
+DEF_TRACEPKT_RANGE(atom_format_6b, 0xe0, 0xf4);
 DEF_TRACEPKT(q, 0xf0, 0xa0);
 
 DECL_DECODE_FN(extension)
@@ -732,6 +734,8 @@ DECL_DECODE_FN(long_address)
         address |= (unsigned long long)pkt[index++] << 24;
         address |= (unsigned long long)pkt[index++] << 32;
         address |= (unsigned long long)pkt[index++] << 40;
+        address |= (unsigned long long)pkt[index++] << 48;
+        address |= (unsigned long long)pkt[index++] << 56;
         break;
 
     case 0x9e:
@@ -743,6 +747,8 @@ DECL_DECODE_FN(long_address)
         address |= (unsigned long long)pkt[index++] << 24;
         address |= (unsigned long long)pkt[index++] << 32;
         address |= (unsigned long long)pkt[index++] << 40;
+        address |= (unsigned long long)pkt[index++] << 48;
+        address |= (unsigned long long)pkt[index++] << 56;
         break;
 
     default:
@@ -812,6 +818,9 @@ DECL_DECODE_FN(context)
         if (data & 0x40) {
             V = 1;
             VMID = pkt[index++];
+            VMID = pkt[index++] << 8;
+            VMID = pkt[index++] << 16;
+            VMID = pkt[index++] << 24;
         }
         if (data & 0x80) {
             C = 1;
@@ -868,6 +877,8 @@ DECL_DECODE_FN(address_context)
         address |= (unsigned long long)pkt[index++] << 24;
         address |= (unsigned long long)pkt[index++] << 32;
         address |= (unsigned long long)pkt[index++] << 40;
+        address |= (unsigned long long)pkt[index++] << 48;
+        address |= (unsigned long long)pkt[index++] << 56;
         break;
 
     case 0x86:
@@ -879,6 +890,8 @@ DECL_DECODE_FN(address_context)
         address |= (unsigned long long)pkt[index++] << 24;
         address |= (unsigned long long)pkt[index++] << 32;
         address |= (unsigned long long)pkt[index++] << 40;
+        address |= (unsigned long long)pkt[index++] << 48;
+        address |= (unsigned long long)pkt[index++] << 56;
         break;
 
     default:
@@ -894,6 +907,9 @@ DECL_DECODE_FN(address_context)
     if (data & 0x40) {
         V = 1;
         VMID = pkt[index++];
+        VMID = pkt[index++] << 8;
+        VMID = pkt[index++] << 16;
+        VMID = pkt[index++] << 24;
     }
     if (data & 0x80) {
         C = 1;
@@ -1055,11 +1071,21 @@ DECL_DECODE_FN(atom_format_5)
         break;
 
     default:
-        LOGE("Invalid ABC in a ATOM format 5 packet\n");
-        break;
+        LOGE("Invalid ABC in a ATOM format 5 packet(0x%02x), ABC=%d%d%d\n", pkt[0], !!(ABC & 4), !!(ABC & 2),
+                !!(ABC & 1));
+        return -1;
     }
 
     return 1;
+}
+
+DECL_DECODE_FN(atom_format_5a)
+{
+    decode_atom_format_5(pkt, stream);
+}
+DECL_DECODE_FN(atom_format_5b)
+{
+    decode_atom_format_5(pkt, stream);
 }
 
 DECL_DECODE_FN(atom_format_6)
@@ -1077,6 +1103,14 @@ DECL_DECODE_FN(atom_format_6)
     tracer_atom(&(stream->tracer), (A)? ATOM_TYPE_N: ATOM_TYPE_E);
 
     return 1;
+}
+DECL_DECODE_FN(atom_format_6a)
+{
+    decode_atom_format_6(pkt, stream);
+}
+DECL_DECODE_FN(atom_format_6b)
+{
+    decode_atom_format_6(pkt, stream);
 }
 
 DECL_DECODE_FN(q)
@@ -1217,8 +1251,10 @@ struct tracepkt *etmv4pkts[] =
     &PKT_NAME(atom_format_2),
     &PKT_NAME(atom_format_3),
     &PKT_NAME(atom_format_4),
-    &PKT_NAME(atom_format_5),
-    &PKT_NAME(atom_format_6),
+    &PKT_NAME(atom_format_5a),
+    &PKT_NAME(atom_format_5b),
+    &PKT_NAME(atom_format_6a),
+    &PKT_NAME(atom_format_6b),
     &PKT_NAME(q),
     NULL,
 };

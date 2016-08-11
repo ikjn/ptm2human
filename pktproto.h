@@ -23,12 +23,18 @@ enum { PKT_TYPE_PTM = 0, PKT_TYPE_ETMV4 };
 
 typedef unsigned char pkt_header;
 
+typedef enum {
+    PKTDEF_MASK = 0,     /* mask and value */
+    PKTDEF_RANGE = 1    /* value range */
+} tracepkt_type;
+
 struct tracepkt
 {
     const char *name;
     pkt_header mask;
     pkt_header val;
     int (*decode)(const pkt_header *, struct stream *);
+    tracepkt_type type;
 };
 
 #define DECODE_FUNC_NAME(__n) decode_ ## __n
@@ -39,15 +45,19 @@ struct tracepkt
 #define PKT_NAME(__n) \
     tracepkt ## __n
 
-#define DEF_TRACEPKT(__n, __m, __v)  \
+#define __DEF_TRACEPKT(__n, __m, __v, __type)  \
     DECL_DECODE_FN(__n);    \
     static struct tracepkt PKT_NAME(__n) =   \
     {   \
         .name = # __n,  \
         .mask = (__m),  \
-        .val = (__v),   \
+        .val  = (__v),   \
         .decode = DECODE_FUNC_NAME(__n),    \
+        .type = __type, \
     }
+
+#define DEF_TRACEPKT(__n, __m, __v)  __DEF_TRACEPKT(__n, __m, __v, PKTDEF_MASK)
+#define DEF_TRACEPKT_RANGE(__n, __m, __v)  __DEF_TRACEPKT(__n, __m, __v, PKTDEF_RANGE)
 
 #define TRACEPKT(__n) \
     tracepkt ## __n
